@@ -1,24 +1,41 @@
 class Calculator
   def add(input)
-     if input.strip.empty?
-       result =  0
-     else
-       delimiter_regex = /,|\n/
-       if input.start_with?("//")
-         delimiter_header, input = input.split("\n", 2)
-         custom_delimiters = delimiter_header[2..-1]
+    return 0 if input.strip.empty?
 
-         # Extract multiple or long delimiters
-         delimiters = custom_delimiters.scan(/\[(.*?)\]/).flatten
-         if delimiters.empty?
-           delimiters = [custom_delimiters]
-         end
-         delimiter_regex = Regexp.union(delimiters.map { |d| Regexp.escape(d) })
-       end
+    input, delimiters = extract_delimiters(input)
+    numbers = split_numbers(input, delimiters)
 
-       numbers = input.split(delimiter_regex).map(&:to_i)
-       result = numbers.sum
-     end
-     result
+    negatives = numbers.select { |n| n < 0 }
+    raise "negatives not allowed: #{negatives.join(', ')}" unless negatives.empty?
+
+    numbers.reject { |n| n > 1000 }.sum
+  end
+
+  private
+
+  def extract_delimiters(input)
+    default_delimiters = [",", "\n"]
+
+    if input.start_with?("//")
+      delimiter_line, input = input.split("\n", 2)
+      raw_delimiters = delimiter_line[2..]
+
+      # Detect [multi] delimiters or fallback to single
+      if raw_delimiters.start_with?("[")
+        # Handles //[***] or //[*][%]
+        delimiters = raw_delimiters.scan(/\[(.*?)\]/).flatten
+      else
+        delimiters = [raw_delimiters]
+      end
+
+      return [input, delimiters]
+    end
+
+    [input, default_delimiters]
+  end
+
+  def split_numbers(input, delimiters)
+    regex = Regexp.union(delimiters.map { |d| Regexp.escape(d) })
+    input.split(regex).map(&:to_i)
   end
 end
