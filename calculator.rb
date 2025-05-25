@@ -14,28 +14,26 @@ class Calculator
   private
 
   def extract_delimiters(input)
-    default_delimiters = [",", "\n"]
-
     if input.start_with?("//")
       delimiter_line, input = input.split("\n", 2)
-      raw_delimiters = delimiter_line[2..]
+      raw_delimiters = delimiter_line[2..-1]
 
-      # Detect [multi] delimiters or fallback to single
       if raw_delimiters.start_with?("[")
-        # Handles //[***] or //[*][%]
-        delimiters = raw_delimiters.scan(/\[(.*?)\]/).flatten
+        # Multiple or long delimiters: //[***][%%]
+        delimiters = raw_delimiters.scan(/\[(.+?)\]/).flatten
       else
+        # Single-char delimiter: //;\n
         delimiters = [raw_delimiters]
       end
 
-      return [input, delimiters]
+      [input, delimiters]
+    else
+      [input, [",", "\n"]]
     end
-
-    [input, default_delimiters]
   end
 
   def split_numbers(input, delimiters)
-    regex = Regexp.union(delimiters.map { |d| Regexp.escape(d) })
-    input.split(regex).map(&:to_i)
+    pattern = Regexp.union(delimiters.map { |d| Regexp.escape(d) })
+    input.split(pattern).map(&:to_i)
   end
 end
