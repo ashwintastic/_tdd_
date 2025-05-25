@@ -1,5 +1,11 @@
 class Calculator
   def add(input)
-    return 0 if input.strip.empty?
+     if input.strip.empty?
+       result =  0
+     else
+       input = input.split(',').map(&:to_i)
+       result = input.sum
+     end
+     result
   end
 end
