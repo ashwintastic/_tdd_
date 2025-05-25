@@ -2,38 +2,34 @@ class Calculator
   def add(input)
     return 0 if input.strip.empty?
 
-    input, delimiters = extract_delimiters(input)
-    numbers = split_numbers(input, delimiters)
+    delimiters = [",", "\n"]
 
-    negatives = numbers.select { |n| n < 0 }
-    raise "negatives not allowed: #{negatives.join(', ')}" unless negatives.empty?
 
-    numbers.reject { |n| n > 1000 }.sum
-  end
-
-  private
-
-  def extract_delimiters(input)
     if input.start_with?("//")
-      delimiter_line, input = input.split("\n", 2)
-      raw_delimiters = delimiter_line[2..-1]
+      p "==="
+      delimiter_section, input = input.split("\n", 2)
+      delimiter_section = delimiter_section[2..]
 
-      if raw_delimiters.start_with?("[")
-        # Multiple or long delimiters: //[***][%%]
-        delimiters = raw_delimiters.scan(/\[(.+?)\]/).flatten
+      if delimiter_section.start_with?("[")
+        # Handles multiple delimiters, possibly long ones
+        delimiters = delimiter_section.scan(/\[(.+?)\]/).flatten
       else
-        # Single-char delimiter: //;\n
-        delimiters = [raw_delimiters]
+        # Single character delimiter
+        delimiters = [delimiter_section]
       end
-
-      [input, delimiters]
+      split_regex = Regexp.union(delimiters.map { |d| Regexp.escape(d) })
     else
-      [input, [",", "\n"]]
+      split_regex = /,|\n/
     end
-  end
 
-  def split_numbers(input, delimiters)
-    pattern = Regexp.union(delimiters.map { |d| Regexp.escape(d) })
-    input.split(pattern).map(&:to_i)
+    # Split numbers and parse them
+    numbers = input.split(split_regex).map(&:to_i)
+
+    # Handle negatives
+    negatives = numbers.select { |n| n < 0 }
+    raise "negatives not allowed: #{negatives.join(', ')}" if negatives.any?
+
+    # Ignore numbers > 1000
+    numbers.reject { |n| n > 1000 }.sum
   end
 end
